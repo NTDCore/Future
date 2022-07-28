@@ -894,134 +894,6 @@ local currentTarget
 local isAuraTweening = false
 
 -- // combat window
-do
-    local InstantKill = {Enabled = false}
-    local AuraDistance = {Value = 18}
-    local AuraAnimation = {Value = ""}
-    local AuraV2 = {Enabled = false}
-    AuraV2 = GuiLibrary.Objects.CombatWindow.API.CreateOptionsButton({
-        Name = "AuraV2",
-        Function = function(callback) 
-            if callback then 
-                spawn(function() -- Begin main attack loop
-                    repeat task.wait()
-
-                        local plrs = getAllPlrsNear(AuraDistance.Value-0.01)
-                        if #plrs == 0 then
-                            currentTarget = nil
-                        end
-
-                        for i,v in next, plrs do 
-                            if canBeTargeted(v) and not bedwars.CheckWhitelisted(v) then    
-                                currentTarget = v
-                                local weapon = getBestSword()
-                                local selfpos = lplr.Character.HumanoidRootPart.Position + (AuraDistance.Value > 14 and (lplr.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).magnitude > 14 and (CFrame.lookAt(lplr.Character.HumanoidRootPart.Position, v.Character.HumanoidRootPart.Position).lookVector * 4) or Vector3.new(0, 0, 0))
-                                local attackArgs = {
-                                    ["weapon"] = weapon~=nil and weapon.tool,
-                                    ["entityInstance"] = v.Character,
-                                    ["validate"] = {
-                                        ["raycast"] = {
-                                            ["cameraPosition"] = hashvector(cam.CFrame.p), 
-                                            ["cursorDirection"] = hashvector(Ray.new(cam.CFrame.p, v.Character.HumanoidRootPart.Position).Unit.Direction)
-                                        },
-                                        ["targetPosition"] = hashvector(v.Character.HumanoidRootPart.Position),
-                                        ["selfPosition"] = hashvector(selfpos),
-                                    }, 
-                                    ["chargedAttack"] = {["chargeRatio"] = InstantKill.Enabled and (0/0) or 1},
-                                }
-                                spawn(function()
-                                    bedwars.ClientHandler:Get(bedwars["AttackRemote"]):CallServer(attackArgs)
-                                end)
-                                task.wait(0.03)
-                            end
-                        end
-    
-                    until not Aura.Enabled
-                end)
-
-                spawn(function() -- Begin asynchronous background task loop
-                    repeat task.wait()
-
-                        setc0 = setc0 or savedc0
-
-                        if currentTarget then
-
-                            playanimation("rbxassetid://4947108314")
-
-                            spawn(function() -- Animation asynchronous thread
-                                cancelViewmodel = true
-
-                                if not tweenedTo then 
-                                    tweenedTo = true
-                                    local v = AuraAnimationList[AuraAnimation.Value].TweenTo
-                                    local Tween = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(v.Time), {C0 = setc0 * v.CFrame})
-                                    Tween:Play()
-                                    task.wait(v.Time)
-                                end
-
-                                if not isAuraTweening then 
-                                    isAuraTweening = true
-                                    for i,v in next, AuraAnimationList[AuraAnimation.Value].Animation do 
-                                        if not Aura.Enabled or not currentTarget then break end
-                                        local Tween = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(v.Time), {C0 = setc0 * v.CFrame})
-                                        Tween:Play()
-                                        task.wait(v.Time)
-                                    end
-                                    isAuraTweening = false
-                                end
-                            end)
-                            
-                            if currentTarget.Character then
-                                pcall(function()
-                                    GuiLibrary["TargetHUDAPI"].update(currentTarget, math.floor(currentTarget.Character:GetAttribute("Health")))
-                                end)
-                            end
-
-                        else
-                            GuiLibrary["TargetHUDAPI"].clear()
-                            if tweenedTo then
-                                cancelViewmodel = true
-                                tweenedTo = false
-                                local v = AuraAnimationList[AuraAnimation.Value].TweenTo
-                                local Tween = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(v.Time), {C0 = setc0})
-                                Tween:Play()
-                                task.wait(v.Time - 0.01)
-                                cancelViewmodel = false
-                            end
-                        end
-
-                    until not Aura.Enabled
-                end)
-
-            else
-                local Tween = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(0.2), {C0 = setc0})
-                Tween:Play()
-                tweenedTo = false
-                isAuraTweening = false
-                currentTarget = nil
-
-            end
-        end,
-    })
-    AuraDistance = Aura.CreateSlider({
-        Name = "Range",
-        Function = function(value) end,
-        Min = 1,
-        Max = 18,
-        Default = 18,
-        Round = 1,
-    })
-    AuraAnimation = Aura.CreateSelector({
-        Name = "Anim",
-        Function = function(value) end,
-        List = AuraAnimations
-    })
-    InstantKill = Aura.CreateToggle({
-        Name = "InstantKill",
-        Function = function(value) end,
-        Default = true, --:troll:
-    })
-end
 do 
     
 
@@ -1244,6 +1116,137 @@ do
         Function = function(value) end,
         Default = false,
     })]===]
+end
+
+do
+
+    local InstantKill = {Enabled = false}
+
+    local AuraDistance = {Value = 18}
+    local AuraAnimation = {Value = ""}
+    local AuraV2 = {Enabled = false}
+    AuraV2 = GuiLibrary.Objects.CombatWindow.API.CreateOptionsButton({
+        Name = "AuraV2",
+        Function = function(callback) 
+            if callback then 
+                spawn(function() -- Begin main attack loop
+                    repeat task.wait()
+
+                        local plrs = getAllPlrsNear(AuraDistance.Value-0.01)
+                        if #plrs == 0 then
+                            currentTarget = nil
+                        end
+
+                        for i,v in next, plrs do 
+                            if canBeTargeted(v) and not bedwars.CheckWhitelisted(v) then    
+                                currentTarget = v
+                                local weapon = getBestSword()
+                                local selfpos = lplr.Character.HumanoidRootPart.Position + (AuraDistance.Value > 14 and (lplr.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).magnitude > 14 and (CFrame.lookAt(lplr.Character.HumanoidRootPart.Position, v.Character.HumanoidRootPart.Position).lookVector * 4) or Vector3.new(0, 0, 0))
+                                local attackArgs = {
+                                    ["weapon"] = weapon~=nil and weapon.tool,
+                                    ["entityInstance"] = v.Character,
+                                    ["validate"] = {
+                                        ["raycast"] = {
+                                            ["cameraPosition"] = hashvector(cam.CFrame.p), 
+                                            ["cursorDirection"] = hashvector(Ray.new(cam.CFrame.p, v.Character.HumanoidRootPart.Position).Unit.Direction)
+                                        },
+                                        ["targetPosition"] = hashvector(v.Character.HumanoidRootPart.Position),
+                                        ["selfPosition"] = hashvector(selfpos),
+                                    }, 
+                                    ["chargedAttack"] = {["chargeRatio"] = InstantKill.Enabled and (0/0) or 1},
+                                }
+                                spawn(function()
+                                    bedwars.ClientHandler:Get(bedwars["AttackRemote"]):CallServer(attackArgs)
+                                end)
+                                task.wait(0.03)
+                            end
+                        end
+    
+                    until not Aura.Enabled
+                end)
+
+                spawn(function() -- Begin asynchronous background task loop
+                    repeat task.wait()
+
+                        setc0 = setc0 or savedc0
+
+                        if currentTarget then
+
+                            playanimation("rbxassetid://4947108314")
+
+                            spawn(function() -- Animation asynchronous thread
+                                cancelViewmodel = true
+
+                                if not tweenedTo then 
+                                    tweenedTo = true
+                                    local v = AuraAnimationList[AuraAnimation.Value].TweenTo
+                                    local Tween = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(v.Time), {C0 = setc0 * v.CFrame})
+                                    Tween:Play()
+                                    task.wait(v.Time)
+                                end
+
+                                if not isAuraTweening then 
+                                    isAuraTweening = true
+                                    for i,v in next, AuraAnimationList[AuraAnimation.Value].Animation do 
+                                        if not Aura.Enabled or not currentTarget then break end
+                                        local Tween = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(v.Time), {C0 = setc0 * v.CFrame})
+                                        Tween:Play()
+                                        task.wait(v.Time)
+                                    end
+                                    isAuraTweening = false
+                                end
+                            end)
+                            
+                            if currentTarget.Character then
+                                pcall(function()
+                                    GuiLibrary["TargetHUDAPI"].update(currentTarget, math.floor(currentTarget.Character:GetAttribute("Health")))
+                                end)
+                            end
+
+                        else
+                            GuiLibrary["TargetHUDAPI"].clear()
+                            if tweenedTo then
+                                cancelViewmodel = true
+                                tweenedTo = false
+                                local v = AuraAnimationList[AuraAnimation.Value].TweenTo
+                                local Tween = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(v.Time), {C0 = setc0})
+                                Tween:Play()
+                                task.wait(v.Time - 0.01)
+                                cancelViewmodel = false
+                            end
+                        end
+
+                    until not Aura.Enabled
+                end)
+
+            else
+                local Tween = game:GetService("TweenService"):Create(cam.Viewmodel.RightHand.RightWrist, TweenInfo.new(0.2), {C0 = setc0})
+                Tween:Play()
+                tweenedTo = false
+                isAuraTweening = false
+                currentTarget = nil
+
+            end
+        end,
+    })
+    AuraDistance = AuraV2.CreateSlider({
+        Name = "Range",
+        Function = function(value) end,
+        Min = 1,
+        Max = 18,
+        Default = 18,
+        Round = 1,
+    })
+    AuraAnimation = AuraV2.CreateSelector({
+        Name = "Anim",
+        Function = function(value) end,
+        List = AuraAnimations
+    })
+    InstantKill = AuraV2.CreateToggle({
+        Name = "InstantKill",
+        Function = function(value) end,
+        Default = true, --:troll:
+    })
 end
 
 do 
