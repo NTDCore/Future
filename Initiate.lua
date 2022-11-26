@@ -28,6 +28,19 @@ local betterisfile = function(file)
 end
 Future.SignalLib = true
 
+local function GetURL(scripturl)
+	if shared.FutureDeveloper then
+		if not betterisfile("Future/"..scripturl) then
+			error("File not found : Future/"..scripturl)
+		end
+		return readfile("Future./"..scripturl)
+	else
+		local res = game:HttpGet("https://raw.githubusercontent.com/NTDCore/FutureDev/main/"..scripturl, true)
+		assert(res ~= "404: Not Found", "File not found")
+		return res
+	end
+end
+
 local function requesturl(url, bypass) 
     if betterisfile(url) and shared.FutureDeveloper then 
         return readfile(url)
@@ -117,7 +130,7 @@ if game:GetService("CoreGui"):FindFirstChild("RobloxVRGui") then
     game:GetService("CoreGui"):FindFirstChild("RobloxVRGui"):Destroy()
 end
 
-local GuiLibrary = loadstring(requesturl("Future/GuiLibrary.lua"))()
+local GuiLibrary = loadstring(GetURL("GuiLibrary.lua"))()
 
 shared.Future.GuiLibrary = GuiLibrary
 local getcustomasset = --[[getsynasset or getcustomasset or]] GuiLibrary["getRobloxAsset"]
